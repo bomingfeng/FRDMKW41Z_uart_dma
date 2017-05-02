@@ -28,33 +28,60 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
+#include "fsl_dmamux.h"
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+
+/*******************************************************************************
+ * Prototypes
+ ******************************************************************************/
+
+/*!
+ * @brief Get instance number for DMAMUX.
+ *
+ * @param base DMAMUX peripheral base address.
+ */
+static uint32_t DMAMUX_GetInstance(DMAMUX_Type *base);
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 
+/*! @brief Array to map DMAMUX instance number to base pointer. */
+static DMAMUX_Type *const s_dmamuxBases[] = DMAMUX_BASE_PTRS;
+
+/*! @brief Array to map DMAMUX instance number to clock name. */
+static const clock_ip_name_t s_dmamuxClockName[] = DMAMUX_CLOCKS;
+
 /*******************************************************************************
  * Code
  ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
+static uint32_t DMAMUX_GetInstance(DMAMUX_Type *base)
 {
-    uint32_t uartClkSrcFreq;
+    uint32_t instance;
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
+    /* Find the instance index from base address mappings. */
+    for (instance = 0; instance < FSL_FEATURE_SOC_DMAMUX_COUNT; instance++)
+    {
+        if (s_dmamuxBases[instance] == base)
+        {
+            break;
+        }
+    }
 
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
+    assert(instance < FSL_FEATURE_SOC_DMAMUX_COUNT);
 
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
+    return instance;
+}
+
+void DMAMUX_Init(DMAMUX_Type *base)
+{
+    CLOCK_EnableClock(s_dmamuxClockName[DMAMUX_GetInstance(base)]);
+}
+
+void DMAMUX_Deinit(DMAMUX_Type *base)
+{
+    CLOCK_DisableClock(s_dmamuxClockName[DMAMUX_GetInstance(base)]);
 }

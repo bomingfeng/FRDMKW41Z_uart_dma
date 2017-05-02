@@ -27,34 +27,40 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#if defined(__GNUC__)
+#include <stdio.h>
+#include <errno.h>
+#endif
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
-
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-
-/*******************************************************************************
- * Code
- ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
+#if defined(__GNUC__)
+/*!
+ * @brief Function to override ARMGCC default function _sbrk
+ *
+ * _sbrk is called by malloc. ARMGCC default _sbrk compares "SP" register and
+ * heap end, if heap end is larger than "SP", then _sbrk returns error and
+ * memory allocation failed. This function changes to compare __HeapLimit with
+ * heap end.
+ */
+caddr_t _sbrk(int incr)
 {
-    uint32_t uartClkSrcFreq;
+    extern char end __asm("end");
+    extern char heap_limit __asm("__HeapLimit");
+    static char *heap_end;
+    char *prev_heap_end;
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
+    if (heap_end == NULL)
+        heap_end = &end;
 
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
+    prev_heap_end = heap_end;
 
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
+    if (heap_end + incr > &heap_limit)
+    {
+        errno = ENOMEM;
+        return (caddr_t)-1;
+    }
+
+    heap_end += incr;
+
+    return (caddr_t)prev_heap_end;
 }
+#endif

@@ -28,33 +28,36 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
+#include "fsl_rcm.h"
 
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-
-/*******************************************************************************
- * Code
- ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
+void RCM_ConfigureResetPinFilter(RCM_Type *base, const rcm_reset_pin_filter_config_t *config)
 {
-    uint32_t uartClkSrcFreq;
+#if (defined(FSL_FEATURE_RCM_REG_WIDTH) && (FSL_FEATURE_RCM_REG_WIDTH == 32))
+    uint32_t reg;
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
-
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
-
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
+    reg = (((uint32_t)config->enableFilterInStop << RCM_RPC_RSTFLTSS_SHIFT) | (uint32_t)config->filterInRunWait);
+    if (config->filterInRunWait == kRCM_FilterBusClock)
+    {
+        reg |= ((uint32_t)config->busClockFilterCount << RCM_RPC_RSTFLTSEL_SHIFT);
+    }
+    base->RPC = reg;
+#else
+    base->RPFC = ((uint8_t)(config->enableFilterInStop << RCM_RPFC_RSTFLTSS_SHIFT) | (uint8_t)config->filterInRunWait);
+    if (config->filterInRunWait == kRCM_FilterBusClock)
+    {
+        base->RPFW = config->busClockFilterCount;
+    }
+#endif /* FSL_FEATURE_RCM_REG_WIDTH */
 }
+
+#if (defined(FSL_FEATURE_RCM_HAS_BOOTROM) && FSL_FEATURE_RCM_HAS_BOOTROM)
+void RCM_SetForceBootRomSource(RCM_Type *base, rcm_boot_rom_config_t config)
+{
+    uint32_t reg;
+
+    reg = base->FM;
+    reg &= ~RCM_FM_FORCEROM_MASK;
+    reg |= ((uint32_t)config << RCM_FM_FORCEROM_SHIFT);
+    base->FM = reg;
+}
+#endif /* #if FSL_FEATURE_RCM_HAS_BOOTROM */

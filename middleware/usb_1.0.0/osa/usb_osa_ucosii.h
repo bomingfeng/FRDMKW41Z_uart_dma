@@ -28,33 +28,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
+#ifndef __USB_OSA_UCOSII_H__
+#define __USB_OSA_UCOSII_H__
+
+#include "ucos_ii.h"
 
 /*******************************************************************************
- * Variables
+ * Definitions
  ******************************************************************************/
+
+#define USB_OSA_SR_ALLOC() uint8_t usb_osa_current_sr;
+#define USB_OSA_ENTER_CRITICAL() USB_OsaEnterCritical(&usb_osa_current_sr)
+#define USB_OSA_EXIT_CRITICAL() USB_OsaExitCritical(usb_osa_current_sr)
 
 /*******************************************************************************
- * Code
+ * API
  ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
-{
-    uint32_t uartClkSrcFreq;
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
+extern void USB_OsaEnterCritical(uint8_t *sr);
+extern void USB_OsaExitCritical(uint8_t sr);
 
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
+#if defined(__cplusplus)
 }
+#endif
+
+#endif /* __USB_OSA_UCOSII_H__ */
+

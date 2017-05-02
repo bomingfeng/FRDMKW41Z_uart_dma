@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Freescale Semiconductor, Inc.
+ * Copyright (c) 2015 - 2016, Freescale Semiconductor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -28,33 +28,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
+#ifndef __USB_OSA_BM_H__
+#define __USB_OSA_BM_H__
 
 /*******************************************************************************
- * Variables
+ * Definitions
  ******************************************************************************/
+
+#define USB_OSA_SR_ALLOC() uint8_t usbOsaCurrentSr;
+#define USB_OSA_ENTER_CRITICAL() USB_OsaEnterCritical(&usbOsaCurrentSr)
+#define USB_OSA_EXIT_CRITICAL() USB_OsaExitCritical(usbOsaCurrentSr)
 
 /*******************************************************************************
- * Code
+ * API
  ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
-{
-    uint32_t uartClkSrcFreq;
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
+extern void USB_OsaEnterCritical(uint8_t *sr);
+extern void USB_OsaExitCritical(uint8_t sr);
 
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
+#if defined(__cplusplus)
 }
+#endif
+
+#endif /* __USB_OSA_BM_H__ */

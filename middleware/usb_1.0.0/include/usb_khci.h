@@ -28,33 +28,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
+#ifndef __USB_KHCI_H__
+#define __USB_KHCI_H__
 
 /*******************************************************************************
- * Variables
+ * Definitions
  ******************************************************************************/
 
-/*******************************************************************************
- * Code
- ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
+#define USB_KHCI_BDT_DEVICE_OUT_TOKEN (0x01U)
+#define USB_KHCI_BDT_DEVICE_IN_TOKEN (0x09U)
+#define USB_KHCI_BDT_DEVICE_SETUP_TOKEN (0x0DU)
+
+#define USB_KHCI_BDT_OWN (0x80U)
+#define USB_KHCI_BDT_DATA01(x) ((((uint32_t)(x)) & 0x01U) << 0x06U)
+#define USB_KHCI_BDT_BC(x) ((((uint32_t)(x)) & 0x3FFU) << 0x10U)
+#define UBS_KHCI_BDT_KEEP (0x20U)
+#define UBS_KHCI_BDT_NINC (0x10U)
+#define USB_KHCI_BDT_DTS (0x08U)
+#define USB_KHCI_BDT_STALL (0x04U)
+
+typedef enum _usb_khci_interrupt_type
 {
-    uint32_t uartClkSrcFreq;
+    kUSB_KhciInterruptReset = 0x01U,
+    kUSB_KhciInterruptError = 0x02U,
+    kUSB_KhciInterruptSofToken = 0x04U,
+    kUSB_KhciInterruptTokenDone = 0x08U,
+    kUSB_KhciInterruptSleep = 0x10U,
+    kUSB_KhciInterruptResume = 0x20U,
+    kUSB_KhciInterruptAttach = 0x40U,
+    kUSB_KhciInterruptStall = 0x80U,
+} usb_khci_interrupt_type_t;
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
-
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
-
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
-}
+#endif /* __USB_KHCI_H__ */

@@ -28,33 +28,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdint.h>
-#include "fsl_common.h"
-#include "clock_config.h"
-#include "board.h"
-#include "fsl_debug_console.h"
+#ifndef __FSL_RAMDISK_H__
+#define __FSL_RAMDISK_H__
+
+#include "diskio.h"
 
 /*******************************************************************************
- * Variables
+ * Definitions
  ******************************************************************************/
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
 
 /*******************************************************************************
- * Code
+ * API
  ******************************************************************************/
-/* Initialize debug console. */
-void BOARD_InitDebugConsole(void)
-{
-    uint32_t uartClkSrcFreq;
+DSTATUS ram_disk_initialize(BYTE pdrv);
+DSTATUS ram_disk_status(BYTE pdrv);
+DRESULT ram_disk_read(BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
+DRESULT ram_disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, UINT count);
+DRESULT ram_disk_ioctl(BYTE pdrv, BYTE cmd, void *buff);
 
-    /* SIM_SOPT2[27:26]:
-     *  00: Clock Disabled
-     *  01: MCGFLLCLK
-     *  10: OSCERCLK
-     *  11: MCGIRCCLK
-     */
-    CLOCK_SetLpuartClock(2);
-
-    uartClkSrcFreq = BOARD_DEBUG_UART_CLK_FREQ;
-
-    DbgConsole_Init(BOARD_DEBUG_UART_BASEADDR, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
+#if defined(__cplusplus)
 }
+#endif
+
+#endif /* __FSL_RAMDISK_H__ */
